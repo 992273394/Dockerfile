@@ -1,3 +1,7 @@
+# 1. 停止当前容器
+docker rm -f hotsearch
+
+# 2. 写入带提示的新版 app.py
 cat > app.py << 'EOF'
 from flask import Flask, render_template_string
 import requests
@@ -5,7 +9,6 @@ from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
-# 带错误处理的知乎热榜
 def get_zhihu_hot():
     try:
         url = "https://www.zhihu.com/hot"
@@ -16,7 +19,7 @@ def get_zhihu_hot():
         return [{"title": i.select_one(".HotList-itemTitle").text, "url": "https://www.zhihu.com" + i.a["href"]} for i in items]
     except Exception as e:
         print(f"获取知乎热榜失败: {e}")
-        return [{"title": "当前网络环境受限，暂时无法获取热榜", "url": "#"}]
+        return [{"title": "当前网络环境受限，暂时无法获取热榜。请稍后再试。", "url": "#"}]
 
 @app.route('/')
 def index():
@@ -54,3 +57,7 @@ def index():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 EOF
+
+# 3. 重建并启动
+docker build -t hotsearch:latest .
+docker run -d --name=hotsearch -p 8889:5000 --restart=always hotsearch:latest
